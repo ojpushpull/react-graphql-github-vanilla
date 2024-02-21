@@ -24,6 +24,8 @@ const TITLE = 'React GraphQl Github Client';
 class App extends Component {
   state = {
     path: 'the-road-to-learn-react/the-road-to-learn-react',
+    organization: null,
+    errors: null,
   };
 
   componentDidMount() {
@@ -44,11 +46,15 @@ class App extends Component {
   onFetchFromGithub = () => {
     axiosGitHubGraphQL
     .post('', { query: GET_ORGANIZATION})
-    .then(result => console.log(result));
-  };
-
+    .then(result => 
+      this.setState(() => ({
+        organization: result.data.data.organization,
+        errors: result.data.errors,
+      })),
+    );
+}
   render () {
-    const { path } = this.state
+    const { path, organization } = this.state
     return (
       <div>
         <h1>
@@ -69,7 +75,7 @@ class App extends Component {
         </form>
         <hr />
 
-        {/* here comes result */}
+        <Organization organization={organization} />
       </div>
     );
   }
