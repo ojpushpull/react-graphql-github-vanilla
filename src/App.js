@@ -34,7 +34,18 @@ const getIssuesOfRepositoryQuery = (organization, repository) => `
 
 const TITLE = 'React GraphQl Github Client';
 
+const getIssuesOfRepository = path => {
+  const [organization, repository] = path.split('/');
 
+
+return  axiosGitHubGraphQL.post('', { query: getIssuesOfRepositoryQuery(organization, repository),
+  });
+};
+
+const resolveIssuesQuery = queryResult => () => ({
+  organization: queryResult.data.data.organization,
+  errors: queryResult.data.errors,
+});
 
 class App extends Component {
   state = {
@@ -59,11 +70,7 @@ class App extends Component {
   };
 
   onFetchFromGithub = path => {
-    const [organization, repository] = path.split('/');
-
-    axiosGitHubGraphQL
-    .post('', { query: getIssuesOfRepositoryQuery(organization, repository) })
-    .then(result => 
+   getIssuesOfRepository(path).then(result => 
       this.setState(() => ({
         organization: result.data.data.organization,
         errors: result.data.errors,
