@@ -11,14 +11,14 @@ const axiosGitHubGraphQL = axios.create({
 });
 
 const GET_ISSUES_OF_REPOSITORY = `
-  query ($organization: String!, $repository: String!) {
+  query ($organization: String!, $repository: String!, $cursor: String) {
     organization(login: $organization) {
     name
     url
     repository(name: $repository) {
       name
       url
-      issues(last: 5, states: [OPEN]) {
+      issues(first: 5, after: $cursor, states: [OPEN]) {
         edges {
           node {
             id
@@ -100,24 +100,56 @@ class App extends Component {
       this.onFetchFromGithub(this.state.path, endCursor);
     };
     
-}
+
 
     
 
 
-  render () {
+  render() { 
     const { path, organization, errors } = this.state;
+
+    return (
+      <div>
+        <h1>
+          {TITLE}
+        </h1>
+        <form onSubmit={this.onSubmit}>
+          <label htmlFor="url">
+            Show open issues for https://github.com/
+             </label>
+             <input
+               id="url"
+               type="text"
+               value={path}
+               onChange={this.onChange}
+               style={{ width: '300px' }}
+               />
+               <button type="submit">Search</button>
+        </form>
+        <hr />
+        
+        {organization ? (
+        <Organization organization={organization} errors={errors}
+        onFetchMoreIssues={this.onFetchMoreIssues} />
+        ) : (
+          <p>No info yet ...</p>
+        )}
+      </div>
+    );
+  }
+}
     
-    const Organization = ({ organization, errors, onFetchMoreIssues, }) => {
+  const Organization = ({ organization, errors, onFetchMoreIssues, }) => {
       if (errors) {
         return (
           <p>
           <strong> something wrong: </strong>
-          {errors.map(error => error.message).join(' ')}
+          {errors.map(error => error.message).join(' ')};
           </p>
         );
-      }
       
+      };
+    
       return (
       <div>
         <p>
@@ -156,37 +188,10 @@ class App extends Component {
         <button onClick={onFetchMoreIssues}>More</button>
       </div>
     )
-    return (
-      <div>
-        <h1>
-          {TITLE}
-        </h1>
-        <form onSubmit={this.onSubmit}>
-          <label htmlFor="url">
-            Show open issues for https://github.com/
-             </label>
-             <input
-               id="url"
-               type="text"
-               value={path}
-               onChange={this.onChange}
-               style={{ width: '300px' }}
-               />
-               <button type="submit">Search</button>
-        </form>
-        <hr />
-        
-        {organization ? (
-        <Organization organization={organization} errors={errors}
-        onFetchMoreIssues={this.onFetchMoreIssues} />
-        ) : (
-          <p>No info yet ...</p>
-        )}
-      </div>
-    );
-  }
+    
+
   
-};
+
 
 
 export default App;
