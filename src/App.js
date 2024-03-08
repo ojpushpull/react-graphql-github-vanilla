@@ -60,6 +60,16 @@ const GET_ISSUES_OF_REPOSITORY = `
   }
   `;
 
+  const REMOVE_STAR = `
+  mutation ($repositoryId: ID!) {
+    removeStar(input:{starrableId:$repositoryId}) {
+      starrable {
+        viewerHasStarred
+      }
+    }
+  }
+`;
+
 const TITLE = 'React GraphQl Github Client';
 
 const getIssuesOfRepository = (path, cursor) => {
@@ -102,6 +112,8 @@ const resolveIssuesQuery = (queryResult, cursor) => state => {
 
 };
 
+
+
 const addStarToRepository = repositoryId => {
   return axiosGitHubGraphQL.post('', {
     query: ADD_STAR,
@@ -113,6 +125,8 @@ const resolveAddStarMutation = mutationResult => state => {
   const { 
     viewerHasStarred,
   } = mutationResult.data.data.addStar.starrable;
+
+  
 
   const { totalCount } = state.organization.repository.stargazers;
 
@@ -130,6 +144,36 @@ const resolveAddStarMutation = mutationResult => state => {
     },
   };
 };
+
+const removeStarFromRepository = repositoryId => {
+  return axiosGitHubGraphQL.post('', {
+    query: REMOVE_STAR,
+    variables: { repositoryId },
+  });
+};
+
+const resolveRemoveStarMutation = mutationResult => state => {
+  const {
+    viewerHasStarred,
+  } = mutationResult.data.data.removeStar.starrable;
+
+  const { totalCount } = state.organization.repository.stargazers;
+
+  return {
+    ...state,
+    organization: {
+      ...state.organization,
+      repository: {
+        ...state.organization.repository,
+        viewerHasStarred,
+        stargazers: {
+          totalCount: totalCount - 1,
+        },
+      },
+    },
+  };
+};
+
 
 class App extends Component {
   state = {
@@ -169,12 +213,17 @@ class App extends Component {
       this.onFetchFromGithub(this.state.path, endCursor);
     };
 
-    onStarRepository = (repositoryId, viewerHasStarred) => {
-      addStarToRepository(repositoryId).then(mutationResult => 
+   onStarRepository = (repositoryId, viewerHasStarred) => {
+    if (viewerHasStarred) {
+      removeStarFromRepository(repositoryId).then(mutationResult =>
+        this.setState(resolveRemoveStarMutation(mutationResult)),
+      );
+    } else {
+      addStarToRepository(repositoryId).then(mutationResult =>
         this.setState(resolveAddStarMutation(mutationResult)),
-        );
-    };
-    
+      );
+    }
+  };
 
 
     
@@ -224,7 +273,7 @@ class App extends Component {
           </p>
         );
       
-      };
+      }
     
       return (
       <div>
@@ -241,7 +290,7 @@ class App extends Component {
      );
     };
 
-    const Repository = ({ repository, onFetchMoreIssues, onStarRepository, }) => (
+    const Repository = ({ repository, onFetchMoreIssues, onStarRepository,  }) => (
       <div>
         <p>
           <strong> In Repository:  </strong>
@@ -250,7 +299,8 @@ class App extends Component {
 
         <button
           type="button"
-          onClick={() => onStarRepository(repository.id, repository.viewerHasStarred)}
+          onClick={() => onStarRepository(repository.id, repository.viewerHasStarred)
+          }
           >
             {repository.stargazers.totalCount}
             {repository.viewerHasStarred ? 'Unstar' : 'Star'}
