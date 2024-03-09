@@ -19,6 +19,7 @@ const GET_ISSUES_OF_REPOSITORY = `
       id
       name
       url
+      createdAt
       stargazers {
         totalCount
       }
@@ -294,7 +295,7 @@ class App extends Component {
       <div>
         <p>
           <strong> In Repository:  </strong>
-          <a href={repository.url}>{repository.name}</a>
+          <a href={repository.url}>{repository.name}{repository.createdAt}</a>
         </p>
 
         <button
